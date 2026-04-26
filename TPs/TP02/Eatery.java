@@ -1,5 +1,4 @@
 import java.util.*;
-import java.io.*;
 
 class Data {
     private int ano;
@@ -407,7 +406,65 @@ class ColecaoRestaurantes {
 
 }
 
+class Lista {
+    private Restaurante[] array;
+    private int n;
 
+    public Lista(){
+        this.array = new Restaurante[1000];
+        this.n = 0;
+    }
+
+    public void inserirInicio(Restaurante restaurante){
+        for (int i = n; i > 0; i--) {
+            array[i] = array[i - 1];
+        }
+        array[0] = restaurante;
+        n++;
+    }
+
+    public void inserirFim(Restaurante restaurante){
+        array[n] = restaurante;
+        n++;
+    }
+
+    public void inserir(Restaurante restaurante, int pos){
+        for (int i = n; i > pos; i--) {
+            array[i] = array[i - 1];
+        }
+        array[pos] = restaurante;
+        n++;
+    }
+
+    public Restaurante removerInicio(){
+        Restaurante resp = array[0];
+        n--;
+        for (int i = 0; i < n; i++) {
+            array[i] = array[i + 1];
+        }
+        return resp;
+    }
+
+    public Restaurante removerFim(){
+        n--;
+        return array[n];
+    }
+
+    public Restaurante remover(int pos){
+        Restaurante resp = array[pos];
+        n--;
+        for (int i = pos; i < n; i++) {
+            array[i] = array[i + 1];
+        }
+        return resp;
+    }
+
+    public void mostrar(){
+        for (int i = 0; i < n; i++) {
+            System.out.println(array[i].formatar());
+        }
+    }
+}
 
 public class Eatery{
 
@@ -574,11 +631,37 @@ public class Eatery{
             reconstruir(array, i, 0, log);
         }
     }
-    public static void main(String[] args) {
-        ColecaoRestaurantes colecao = ColecaoRestaurantes.lerCsv();
+
+    public static int converterParaInt(String s){
+        int num = 0;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c >= '0' && c <= '9') {
+                num = (num * 10) + (c - '0');
+            }
+        }
+        return num;
+    }
+
+    public static Restaurante buscarPorId(ColecaoRestaurantes colecao, int id){
         Restaurante[] base = colecao.getRestaurantes();
-        Restaurante[] arrayPesquisa = new Restaurante[1000];
-        int nPesquisa = 0;
+        Restaurante resp = null;
+        int i = 0;
+        boolean achou = false;
+
+        while (i < colecao.getTamanho() && !achou){
+            if (base[i].getId() == id){
+                resp = base[i];
+                achou = true;
+            }
+            i++;
+        }
+        return resp;
+    }    
+
+    public static void main(String[] args){
+        ColecaoRestaurantes colecao = ColecaoRestaurantes.lerCsv();
+        Lista lista = new Lista();
         
         Scanner sc = new Scanner(System.in);
 
@@ -591,49 +674,51 @@ public class Eatery{
                 lerEntrada = false;
             } else {
                 //convertendo ID em int
-                int idProcurado = 0;
-                for(int i = 0; i < linha.length(); i++){
-                    char c = linha.charAt(i);
-                    if(c >= '0' && c <= '9'){
-                        idProcurado = (idProcurado * 10) + (c - '0');
-                    }
-                }
+                int idProcurado = converterParaInt(linha);
+                Restaurante r = buscarPorId(colecao, idProcurado);
 
-                boolean achou = false;
-                int indice = 0;
-                while (!achou && indice < colecao.getTamanho()) {
-                    if (base[indice].getId() == idProcurado) {
-                        arrayPesquisa[nPesquisa] = base[indice];
-                        nPesquisa++;
-                        achou = true;
-                    }
-                    indice++;
+                if (r != null){
+                    lista.inserirFim(r); //parte 1 da entrada: registros no fim
+                }
+            }
+        }
+
+        if (sc.hasNext()){
+            int numComandos = converterParaInt(sc.next()); //parte 2 da entrada: comandos
+
+            for (int i = 0; i < numComandos; i++) {
+                String comando = sc.next();
+
+                if (comando.compareTo("II") == 0){
+                    int id = converterParaInt(sc.next());
+                    lista.inserirInicio(buscarPorId(colecao, id));
+                    
+                } else if (comando.compareTo("IF") == 0){
+                    int id = converterParaInt(sc.next());
+                    lista.inserirFim(buscarPorId(colecao, id));
+                    
+                } else if (comando.compareTo("I*") == 0){
+                    int pos = converterParaInt(sc.next());
+                    int id = converterParaInt(sc.next());
+                    lista.inserir(buscarPorId(colecao, id), pos);
+                    
+                } else if (comando.compareTo("RI") == 0){
+                    Restaurante r = lista.removerInicio();
+                    System.out.println("(R)" + r.getNome());
+                    
+                } else if (comando.compareTo("RF") == 0){
+                    Restaurante r = lista.removerFim();
+                    System.out.println("(R)" + r.getNome());
+                    
+                } else if (comando.compareTo("R*") == 0){
+                    int pos = converterParaInt(sc.next());
+                    Restaurante r = lista.remover(pos);
+                    System.out.println("(R)" + r.getNome());
                 }
             }
         }
         sc.close();
 
-        int[] contadoresLog = new int[2];
-        long inicioTempo = System.currentTimeMillis();
-
-        heapsort(arrayPesquisa, nPesquisa, contadoresLog);
-
-        long fim = System.currentTimeMillis();
-        long tempoExecucao = fim - inicioTempo;
-
-        for (int i = 0; i < nPesquisa; i++) {
-            System.out.println(arrayPesquisa[i].formatar());
-        }
-
-        try {
-            FileWriter arquivoLog = new FileWriter("896238_heapsort.txt");
-            PrintWriter gravador = new PrintWriter(arquivoLog);
-            
-            gravador.printf("896238\t%d\t%d\t%d\n", contadoresLog[0], contadoresLog[1], tempoExecucao);
-            
-            gravador.close();
-        } catch (IOException e) {
-            System.out.println("Erro ao gravar log");
-        }
+        lista.mostrar(); //partw 3 da entrada: mostrar tudo
     }
 }
