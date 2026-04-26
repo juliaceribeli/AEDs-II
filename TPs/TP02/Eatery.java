@@ -466,6 +466,67 @@ class Lista {
     }
 }
 
+class FilaCircular {
+    private Restaurante[] array;
+    private int primeiro;
+    private int ultimo;
+    private final int TAMANHO = 6;
+
+    public FilaCircular(){
+        this.array = new Restaurante[TAMANHO];
+        this.primeiro = 0;
+        this.ultimo = 0;
+    }
+
+    public void inserir(Restaurante restaurante){
+        if (((ultimo + 1) % TAMANHO) == primeiro){
+            remover();
+        }
+
+        array[ultimo] = restaurante;
+        ultimo = (ultimo + 1) % TAMANHO;
+
+        System.out.println("(I)" + calcularMediaAno());
+    }
+
+    public Restaurante remover(){
+        if (primeiro == ultimo){
+            return null;
+        }
+
+        Restaurante resp = array[primeiro];
+        primeiro = (primeiro + 1) % TAMANHO;
+        
+        System.out.println("(R)" + resp.getNome());
+        return resp;
+    }
+
+    private int calcularMediaAno(){
+        int soma = 0;
+        int quantidade = 0;
+        int i = primeiro;
+
+        while (i != ultimo) {
+            soma += array[i].getDataAbertura().getAno();
+            quantidade++;
+            i = (i + 1) % TAMANHO;
+        }
+
+        if (quantidade == 0) {
+            return 0;
+        }
+        return Math.round((float) soma / quantidade);
+    }
+
+    public void mostrar(){
+        int i = primeiro;
+        while (i != ultimo) {
+            System.out.println(array[i].formatar());
+            i = (i + 1) % TAMANHO;
+        }
+    }
+}
+
 public class Eatery{
 
     public static void ordenarPorInsercao(Restaurante[] array, int n, int[] log) {
@@ -661,7 +722,7 @@ public class Eatery{
 
     public static void main(String[] args){
         ColecaoRestaurantes colecao = ColecaoRestaurantes.lerCsv();
-        Lista lista = new Lista();
+        FilaCircular fila = new FilaCircular();
         
         Scanner sc = new Scanner(System.in);
 
@@ -677,48 +738,32 @@ public class Eatery{
                 int idProcurado = converterParaInt(linha);
                 Restaurante r = buscarPorId(colecao, idProcurado);
 
-                if (r != null){
-                    lista.inserirFim(r); //parte 1 da entrada: registros no fim
+                if (r != null) {
+                    fila.inserir(r);
                 }
             }
         }
 
-        if (sc.hasNext()){
-            int numComandos = converterParaInt(sc.next()); //parte 2 da entrada: comandos
+        if (sc.hasNext()) {
+            int numComandos = converterParaInt(sc.next());
 
             for (int i = 0; i < numComandos; i++) {
                 String comando = sc.next();
 
-                if (comando.compareTo("II") == 0){
+                if (comando.compareTo("I") == 0) {
                     int id = converterParaInt(sc.next());
-                    lista.inserirInicio(buscarPorId(colecao, id));
+                    Restaurante r = buscarPorId(colecao, id);
+                    if (r != null) {
+                        fila.inserir(r);
+                    }
                     
-                } else if (comando.compareTo("IF") == 0){
-                    int id = converterParaInt(sc.next());
-                    lista.inserirFim(buscarPorId(colecao, id));
-                    
-                } else if (comando.compareTo("I*") == 0){
-                    int pos = converterParaInt(sc.next());
-                    int id = converterParaInt(sc.next());
-                    lista.inserir(buscarPorId(colecao, id), pos);
-                    
-                } else if (comando.compareTo("RI") == 0){
-                    Restaurante r = lista.removerInicio();
-                    System.out.println("(R)" + r.getNome());
-                    
-                } else if (comando.compareTo("RF") == 0){
-                    Restaurante r = lista.removerFim();
-                    System.out.println("(R)" + r.getNome());
-                    
-                } else if (comando.compareTo("R*") == 0){
-                    int pos = converterParaInt(sc.next());
-                    Restaurante r = lista.remover(pos);
-                    System.out.println("(R)" + r.getNome());
+                } else if (comando.compareTo("R") == 0) {
+                    fila.remover();
                 }
             }
         }
-        sc.close();
 
-        lista.mostrar(); //partw 3 da entrada: mostrar tudo
+        fila.mostrar();
+        sc.close();
     }
 }
