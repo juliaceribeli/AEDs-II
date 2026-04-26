@@ -320,6 +320,62 @@ bool pesquisa_binaria(Restaurante** array, int n, char* nome_buscado, int* compa
     return achou;
 }
 
+bool vem_antes(Restaurante* r1, Restaurante* r2, int* comparacoes) {
+    (*comparacoes)++;
+    if (r1->avaliacao < r2->avaliacao){
+        return true;
+    } else if (r1->avaliacao > r2->avaliacao){
+        return false;
+    } else {
+        (*comparacoes)++;
+        return strcmp(r1->nome, r2->nome) < 0;
+    }
+}
+
+bool vem_depois(Restaurante* r1, Restaurante* r2, int* comparacoes){
+    (*comparacoes)++;
+    if (r1->avaliacao > r2->avaliacao){
+        return true;
+    } else if(r1->avaliacao < r2->avaliacao) {
+        return false;
+    } else {
+        (*comparacoes)++;
+        return strcmp(r1->nome, r2->nome) > 0;
+    }
+}
+
+void quicksort(Restaurante** array, int esq, int dir, int* comparacoes, int* movimentacoes){
+    int i = esq;
+    int j = dir;
+    
+    Restaurante* pivo = array[(esq + dir) / 2];
+
+    while (i <= j) {
+        while (vem_antes(array[i], pivo, comparacoes)){
+            i++;
+        }
+        while (vem_depois(array[j], pivo, comparacoes)){
+            j--;
+        }
+
+        if (i <= j) {
+            Restaurante* temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;       
+            (*movimentacoes) += 3;
+            i++;
+            j--;
+        }
+    }
+
+    if (esq < j){
+        quicksort(array, esq, j, comparacoes, movimentacoes);
+    }
+    if (i < dir){
+        quicksort(array, i, dir, comparacoes, movimentacoes);
+    }
+}
+
 int main() {
     Colecao_Restaurantes* colecao = ler_csv();
 
@@ -351,59 +407,24 @@ int main() {
         }
     }
 
-    int lixo_comp = 0, lixo_mov = 0;
-    ordenar_por_selecao(array_pesquisa, n_pesquisa, &lixo_comp, &lixo_mov);
-
-char c_lixo = ' ';
-    bool limpando = true;
-    while (limpando){
-        c_lixo = getchar();
-        if (c_lixo == '\n' || c_lixo == EOF){
-            limpando = false;
-        }
-    }
-
     int comparacoes = 0;
+    int movimentacoes = 0;
     clock_t inicio = clock();
 
-    bool lendo_nomes = true;
-    
-    while (lendo_nomes && fgets(linha, 200, stdin) != NULL){
-        
-        bool achou_fim_linha = false;
-        int tamanho_real = 0;
-
-        for (int i = 0; linha[i] != '\0'; i++) {
-            if (!achou_fim_linha && (linha[i] == '\n' || linha[i] == '\r')){
-                linha[i] = '\0';
-                achou_fim_linha = true;
-            }
-            if (!achou_fim_linha) {
-                tamanho_real++;
-            }
-        }
-
-        if (tamanho_real > 0){
-            if (strcmp(linha, "FIM") == 0){
-                lendo_nomes = false;
-            } else {
-                bool resultado = pesquisa_binaria(array_pesquisa, n_pesquisa, linha, &comparacoes);
-                
-                if (resultado){
-                    printf("SIM\n");
-                } else {
-                    printf("NAO\n");
-                }
-            }
-        }
-    }
+    quicksort(array_pesquisa, 0, n_pesquisa - 1, &comparacoes, &movimentacoes);
 
     clock_t fim = clock();
     double tempo_execucao = ((double)(fim - inicio)) / (CLOCKS_PER_SEC / 1000.0);
 
-    FILE* log = fopen("896238_binaria.txt", "w");
+    for(int i = 0; i < n_pesquisa; i++){
+        char buffer_saida[2000];
+        formatar_restaurante(array_pesquisa[i], buffer_saida);
+        printf("%s\n", buffer_saida);
+    }
+
+    FILE* log = fopen("896238_quicksort.txt", "w");
     if (log != NULL) {
-        fprintf(log, "896238\t%d\t%f\n", comparacoes, tempo_execucao);
+        fprintf(log, "896238\t%d\t%d\t%f\n", comparacoes, movimentacoes, tempo_execucao);
         fclose(log);
     }
 
