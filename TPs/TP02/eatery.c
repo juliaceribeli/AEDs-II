@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 
 typedef struct {
     int ano;
@@ -274,8 +275,33 @@ Colecao_Restaurantes* ler_csv() {
     return colecao;
 }
 
+void ordenar_por_selecao(Restaurante** array, int n, int* comparacoes, int* movimentacoes) {
+    for (int i = 0; i < n - 1; i++) {
+        int indice_menor = i;
+        
+        for (int j = i + 1; j < n; j++) {
+            (*comparacoes)++;
+            
+            if (strcmp(array[j]->nome, array[indice_menor]->nome) < 0) {
+                indice_menor = j;
+            }
+        }
+        
+        if (indice_menor != i) {
+            Restaurante* temp = array[i];
+            array[i] = array[indice_menor];
+            array[indice_menor] = temp;
+            
+            (*movimentacoes) += 3; 
+        }
+    }
+}
+
 int main() {
     Colecao_Restaurantes* colecao = ler_csv();
+
+    Restaurante* array_pesquisa[1000];
+    int n_pesquisa = 0;
 
     char linha[20];
     bool ler_entrada = true;
@@ -292,21 +318,35 @@ int main() {
                 }
             }
 
-            bool achou = false;
-            int indice = 0;
-
-            while (!achou && indice < colecao->tamanho) {
-                if (colecao->restaurantes[indice]->id == id_procurado) {
-                    
-                    char buffer_saida[2000];
-                    formatar_restaurante(colecao->restaurantes[indice], buffer_saida);
-                    printf("%s\n", buffer_saida);
-                    
-                    achou = true;
+            for(int i = 0; i < colecao->tamanho; i++){
+                if(colecao->restaurantes[i]->id == id_procurado){
+                    array_pesquisa[n_pesquisa] = colecao->restaurantes[i];
+                    n_pesquisa++;
+                    i = colecao->tamanho; 
                 }
-                indice++;
             }
         }
+    }
+
+    int comparacoes = 0;
+    int movimentacoes = 0;
+    clock_t inicio = clock();
+
+    ordenar_por_selecao(array_pesquisa, n_pesquisa, &comparacoes, &movimentacoes);
+
+    clock_t fim = clock();
+    double tempo_execucao = ((double)(fim - inicio)) / (CLOCKS_PER_SEC / 1000.0);
+
+    for(int i = 0; i < n_pesquisa; i++){
+        char buffer_saida[2000];
+        formatar_restaurante(array_pesquisa[i], buffer_saida);
+        printf("%s\n", buffer_saida);
+    }
+
+    FILE* log = fopen("896238_selecao.txt", "w");
+    if (log != NULL) {
+        fprintf(log, "896238\t%d\t%d\t%f\n", comparacoes, movimentacoes, tempo_execucao);
+        fclose(log);
     }
 
     return 0;
