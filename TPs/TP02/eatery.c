@@ -419,11 +419,42 @@ void countingsort(Restaurante** array, int n, int* comparacoes, int* movimentaco
     free(ordenado);
 }
 
+typedef struct {
+    Restaurante* array[1000];
+    int n;
+} Pilha;
+
+void iniciar_pilha(Pilha* p){
+    p->n = 0;
+}
+
+void empilhar(Pilha* p, Restaurante* r){
+    p->array[p->n] = r;
+    p->n++;
+}
+
+Restaurante* desempilhar(Pilha* p){
+    if (p->n > 0){
+        p->n--;
+        return p->array[p->n];
+    }
+    return NULL;
+}
+
+void mostrar_pilha(Pilha* p){
+    for (int i = p->n - 1; i >= 0; i--){
+        char buffer_saida[2000];
+        formatar_restaurante(p->array[i], buffer_saida);
+        printf("%s\n", buffer_saida);
+    }
+    
+}
+
 int main() {
     Colecao_Restaurantes* colecao = ler_csv();
 
-    Restaurante* array_pesquisa[1000];
-    int n_pesquisa = 0;
+    Pilha pilha;
+    iniciar_pilha(&pilha);
 
     char linha[200];
     bool ler_entrada = true;
@@ -440,36 +471,50 @@ int main() {
                 }
             }
 
-            for(int i = 0; i < colecao->tamanho; i++){
-                if(colecao->restaurantes[i]->id == id_procurado){
-                    array_pesquisa[n_pesquisa] = colecao->restaurantes[i];
-                    n_pesquisa++;
-                    i = colecao->tamanho; 
+            bool achou = false;
+            int indice = 0;
+            while (!achou && indice < colecao->tamanho){
+                if (colecao->restaurantes[indice]->id == id_procurado){
+                    empilhar(&pilha, colecao->restaurantes[indice]);
+                    achou = true;
+                }
+                indice++;
+            }
+        }
+    }
+
+    int num_comandos = 0;
+    if (scanf(" %d", &num_comandos) == 1) {
+        
+        for (int k = 0; k < num_comandos; k++) {
+            char comando[50];
+            scanf(" %s", comando);
+
+            if (strcmp(comando, "I") == 0) {
+                int id_inserir;
+                scanf(" %d", &id_inserir);
+
+                bool achou = false;
+                int indice = 0;
+                while (!achou && indice < colecao->tamanho) {
+                    if (colecao->restaurantes[indice]->id == id_inserir) {
+                        empilhar(&pilha, colecao->restaurantes[indice]);
+                        achou = true;
+                    }
+                    indice++;
+                }
+
+            } else if (strcmp(comando, "R") == 0) {
+                Restaurante* removido = desempilhar(&pilha);
+                
+                if (removido != NULL) {
+                    printf("(R)%s\n", removido->nome);
                 }
             }
         }
     }
 
-    int comparacoes = 0;
-    int movimentacoes = 0;
-    clock_t inicio = clock();
-
-    countingsort(array_pesquisa, n_pesquisa, &comparacoes, &movimentacoes);
-
-    clock_t fim = clock();
-    double tempo_execucao = ((double)(fim - inicio)) / (CLOCKS_PER_SEC / 1000.0);
-
-    for(int i = 0; i < n_pesquisa; i++){
-        char buffer_saida[2000];
-        formatar_restaurante(array_pesquisa[i], buffer_saida);
-        printf("%s\n", buffer_saida);
-    }
-
-    FILE* log = fopen("896238_countingsort.txt", "w");
-    if (log != NULL) {
-        fprintf(log, "896238\t%d\t%d\t%f\n", comparacoes, movimentacoes, tempo_execucao);
-        fclose(log);
-    }
+    mostrar_pilha(&pilha);
 
     return 0;
 }
