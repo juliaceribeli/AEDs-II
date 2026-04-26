@@ -447,6 +447,74 @@ public class Eatery{
 
         return achou;
     }
+
+    public static void mergesort(Restaurante[] array, int esq, int dir, int[] log){
+        if (esq < dir){
+            int meio = (esq + dir) / 2;
+            mergesort(array, esq, meio, log);
+            mergesort(array, meio + 1, dir, log);
+            intercalar(array, esq, meio, dir, log);
+        }
+    }
+
+    public static void intercalar(Restaurante[] array, int esq, int meio, int dir, int[] log) {
+        int n1 = meio - esq + 1;
+        int n2 = dir - meio;
+
+        Restaurante[] a1 = new Restaurante[n1];
+        Restaurante[] a2 = new Restaurante[n2];
+
+        for (int i = 0; i < n1; i++){
+            a1[i] = array[esq + i];
+            log[1]++;
+        }
+        for (int j = 0; j < n2; j++){
+            a2[j] = array[meio + 1 + j];
+            log[1]++;
+        }
+
+        int i = 0, j = 0, k = esq;
+
+        while (i < n1 && j < n2){
+            log[0]++;
+            int compCidade = a1[i].getCidade().compareTo(a2[j].getCidade());
+
+            if (compCidade < 0){
+                array[k] = a1[i];
+                i++;
+            } else if (compCidade > 0){
+                array[k] = a2[j];
+                j++;
+            } else {
+                log[0]++;
+                
+                if (a1[i].getNome().compareTo(a2[j].getNome()) <= 0) {
+                    array[k] = a1[i];
+                    i++;
+                } else {
+                    array[k] = a2[j];
+                    j++;
+                }
+            }
+            log[1]++;
+            k++;
+        }
+
+        while (i < n1) {
+            array[k] = a1[i];
+            i++;
+            k++;
+            log[1]++;
+        }
+
+        while (j < n2) {
+            array[k] = a2[j];
+            j++;
+            k++;
+            log[1]++;
+        }
+    }
+
     public static void main(String[] args) {
         ColecaoRestaurantes colecao = ColecaoRestaurantes.lerCsv();
         Restaurante[] base = colecao.getRestaurantes();
@@ -484,37 +552,26 @@ public class Eatery{
                 }
             }
         }
-
-        int[] contadoresLog = new int[1];
-        long inicioTempo = System.currentTimeMillis();
-
-        boolean lendoNomes = true;
-        while (lendoNomes && sc.hasNextLine()) {
-            String nomeBuscado = sc.nextLine();
-
-            nomeBuscado = nomeBuscado.replace("\r", "");
-
-            if (nomeBuscado.compareTo("FIM") == 0) {
-                lendoNomes = false;
-            } else {
-                boolean resultado = pesquisaSequencial(arrayPesquisa, nPesquisa, nomeBuscado, contadoresLog);
-                
-                if (resultado) {
-                    System.out.println("SIM");
-                } else {
-                    System.out.println("NAO");
-                }
-            }
-        }
         sc.close();
 
-        long fimTempo = System.currentTimeMillis();
-        long tempoTotal = fimTempo - inicioTempo;
+        int[] contadoresLog = new int[2];
+        long inicioTempo = System.currentTimeMillis();
+
+        mergesort(arrayPesquisa, 0, nPesquisa - 1, contadoresLog);
+
+        long fim = System.currentTimeMillis();
+        long tempoExecucao = fim - inicioTempo;
+
+        for (int i = 0; i < nPesquisa; i++) {
+            System.out.println(arrayPesquisa[i].formatar());
+        }
 
         try {
-            FileWriter arquivoLog = new FileWriter("896238_sequencial.txt");
+            FileWriter arquivoLog = new FileWriter("896238_mergesort.txt");
             PrintWriter gravador = new PrintWriter(arquivoLog);
-            gravador.printf("896238\t%d\t%d\n", contadoresLog[0], tempoTotal);
+            
+            gravador.printf("896238\t%d\t%d\t%d\n", contadoresLog[0], contadoresLog[1], tempoExecucao);
+            
             gravador.close();
         } catch (IOException e) {
             System.out.println("Erro ao gravar log");
