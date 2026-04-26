@@ -376,6 +376,49 @@ void quicksort(Restaurante** array, int esq, int dir, int* comparacoes, int* mov
     }
 }
 
+int get_maior_capacidade(Restaurante** array, int n, int* comparacoes){
+    int maior = array[0]->capacidade;
+    for (int i = 1; i < n; i++){
+        (*comparacoes)++;
+        if (array[i]->capacidade > maior){
+            maior = array[i]->capacidade;
+        }
+    }
+    return maior;
+}
+
+void countingsort(Restaurante** array, int n, int* comparacoes, int* movimentacoes) {
+    int maior = get_maior_capacidade(array, n, comparacoes);
+
+    int* count = (int*) calloc((maior + 1), sizeof(int));
+    Restaurante** ordenado = (Restaurante**) malloc(n * sizeof(Restaurante*));
+
+    for (int i = 0; i < n; i++){
+        count[array[i]->capacidade]++;
+    }
+
+    for (int i = 1; i <= maior; i++){
+        count[i] += count[i - 1];
+    }
+
+    for (int i = n - 1; i >= 0; i--){
+        int cap = array[i]->capacidade;
+        int posicao = count[cap] - 1;
+        
+        ordenado[posicao] = array[i];
+        count[cap]--;
+        (*movimentacoes)++;
+    }
+
+    for (int i = 0; i < n; i++){
+        array[i] = ordenado[i];
+        (*movimentacoes)++;
+    }
+
+    free(count);
+    free(ordenado);
+}
+
 int main() {
     Colecao_Restaurantes* colecao = ler_csv();
 
@@ -411,7 +454,7 @@ int main() {
     int movimentacoes = 0;
     clock_t inicio = clock();
 
-    quicksort(array_pesquisa, 0, n_pesquisa - 1, &comparacoes, &movimentacoes);
+    countingsort(array_pesquisa, n_pesquisa, &comparacoes, &movimentacoes);
 
     clock_t fim = clock();
     double tempo_execucao = ((double)(fim - inicio)) / (CLOCKS_PER_SEC / 1000.0);
@@ -422,7 +465,7 @@ int main() {
         printf("%s\n", buffer_saida);
     }
 
-    FILE* log = fopen("896238_quicksort.txt", "w");
+    FILE* log = fopen("896238_countingsort.txt", "w");
     if (log != NULL) {
         fprintf(log, "896238\t%d\t%d\t%f\n", comparacoes, movimentacoes, tempo_execucao);
         fclose(log);
