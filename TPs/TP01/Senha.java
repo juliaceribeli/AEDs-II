@@ -44,6 +44,7 @@ public class Senha {
 
             senha = sc.nextLine();
         }
+        sc.close();
     }
     
 }
