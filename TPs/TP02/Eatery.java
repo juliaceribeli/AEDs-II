@@ -432,6 +432,21 @@ public class Eatery{
             log[1]++;
         }
     }
+
+    public static boolean pesquisaSequencial(Restaurante[] array, int n, String nomeBuscado, int[] log) {
+        boolean achou = false;
+        int i = 0;
+
+        while (i < n && !achou) {
+            log[0]++;
+            if (array[i].getNome().compareTo(nomeBuscado) == 0) {
+                achou = true;
+            }
+            i++;
+        }
+
+        return achou;
+    }
     public static void main(String[] args) {
         ColecaoRestaurantes colecao = ColecaoRestaurantes.lerCsv();
         Restaurante[] base = colecao.getRestaurantes();
@@ -469,29 +484,40 @@ public class Eatery{
                 }
             }
         }
+
+        int[] contadoresLog = new int[1];
+        long inicioTempo = System.currentTimeMillis();
+
+        boolean lendoNomes = true;
+        while (lendoNomes && sc.hasNextLine()) {
+            String nomeBuscado = sc.nextLine();
+
+            nomeBuscado = nomeBuscado.replace("\r", "");
+
+            if (nomeBuscado.compareTo("FIM") == 0) {
+                lendoNomes = false;
+            } else {
+                boolean resultado = pesquisaSequencial(arrayPesquisa, nPesquisa, nomeBuscado, contadoresLog);
+                
+                if (resultado) {
+                    System.out.println("SIM");
+                } else {
+                    System.out.println("NAO");
+                }
+            }
+        }
         sc.close();
 
-        int[] contadoresLog = new int[2];
-        long inicio = System.currentTimeMillis();
-
-        ordenarPorInsercao(arrayPesquisa, nPesquisa, contadoresLog);
-
-        long fim = System.currentTimeMillis();
-        long tempoExecucao = fim - inicio;
-
-        for (int i = 0; i < nPesquisa; i++) {
-            System.out.println(arrayPesquisa[i].formatar());
-        }
+        long fimTempo = System.currentTimeMillis();
+        long tempoTotal = fimTempo - inicioTempo;
 
         try {
-            FileWriter arquivoLog = new FileWriter("896238_insercao.txt");
+            FileWriter arquivoLog = new FileWriter("896238_sequencial.txt");
             PrintWriter gravador = new PrintWriter(arquivoLog);
-            
-            gravador.printf("896238\t%d\t%d\t%d\n", contadoresLog[0], contadoresLog[1], tempoExecucao);
-            
+            gravador.printf("896238\t%d\t%d\n", contadoresLog[0], tempoTotal);
             gravador.close();
         } catch (IOException e) {
-            System.out.println("Erro ao gravar log: " + e.getMessage());
+            System.out.println("Erro ao gravar log");
         }
     }
 }
