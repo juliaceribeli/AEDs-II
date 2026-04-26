@@ -1,4 +1,5 @@
 import java.util.*;
+import java.io.*;
 
 class Data {
     private int ano;
@@ -409,10 +410,33 @@ class ColecaoRestaurantes {
 
 
 public class Eatery{
-    public static void main(String[] args){
+
+    public static void ordenarPorInsercao(Restaurante[] array, int n, int[] log) {
+        for (int i = 1; i < n; i++) {
+            Restaurante tmp = array[i];
+            int j = i - 1;
+            boolean inseriu = false;
+
+            while (j >= 0 && !inseriu) {
+                log[0]++;
+                
+                if (array[j].getCidade().compareTo(tmp.getCidade()) > 0) {
+                    array[j + 1] = array[j];
+                    log[1]++;
+                    j--;
+                } else {
+                    inseriu = true; 
+                }
+            }
+            array[j + 1] = tmp;
+            log[1]++;
+        }
+    }
+    public static void main(String[] args) {
         ColecaoRestaurantes colecao = ColecaoRestaurantes.lerCsv();
-        Restaurante[] vetor = colecao.getRestaurantes();
-        int totalCadastrado = colecao.getTamanho();
+        Restaurante[] base = colecao.getRestaurantes();
+        Restaurante[] arrayPesquisa = new Restaurante[1000];
+        int nPesquisa = 0;
         
         Scanner sc = new Scanner(System.in);
 
@@ -435,10 +459,10 @@ public class Eatery{
 
                 boolean achou = false;
                 int indice = 0;
-
-                while (!achou && indice < totalCadastrado) {
-                    if (vetor[indice].getId() == idProcurado) {
-                        System.out.println(vetor[indice].formatar());
+                while (!achou && indice < colecao.getTamanho()) {
+                    if (base[indice].getId() == idProcurado) {
+                        arrayPesquisa[nPesquisa] = base[indice];
+                        nPesquisa++;
                         achou = true;
                     }
                     indice++;
@@ -446,5 +470,28 @@ public class Eatery{
             }
         }
         sc.close();
+
+        int[] contadoresLog = new int[2];
+        long inicio = System.currentTimeMillis();
+
+        ordenarPorInsercao(arrayPesquisa, nPesquisa, contadoresLog);
+
+        long fim = System.currentTimeMillis();
+        long tempoExecucao = fim - inicio;
+
+        for (int i = 0; i < nPesquisa; i++) {
+            System.out.println(arrayPesquisa[i].formatar());
+        }
+
+        try {
+            FileWriter arquivoLog = new FileWriter("896238_insercao.txt");
+            PrintWriter gravador = new PrintWriter(arquivoLog);
+            
+            gravador.printf("896238\t%d\t%d\t%d\n", contadoresLog[0], contadoresLog[1], tempoExecucao);
+            
+            gravador.close();
+        } catch (IOException e) {
+            System.out.println("Erro ao gravar log: " + e.getMessage());
+        }
     }
 }
