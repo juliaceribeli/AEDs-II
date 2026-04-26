@@ -297,13 +297,36 @@ void ordenar_por_selecao(Restaurante** array, int n, int* comparacoes, int* movi
     }
 }
 
+bool pesquisa_binaria(Restaurante** array, int n, char* nome_buscado, int* comparacoes) {
+    bool achou = false;
+    int esq = 0;
+    int dir = n - 1;
+
+    while(esq <= dir && !achou){
+        int meio = (esq + dir) / 2;
+        
+        (*comparacoes)++;
+        int comp = strcmp(nome_buscado, array[meio]->nome);
+
+        if(comp == 0){
+            achou = true;
+        } else if(comp > 0){
+            esq = meio + 1;
+        } else {
+            dir = meio - 1;
+        }
+    }
+
+    return achou;
+}
+
 int main() {
     Colecao_Restaurantes* colecao = ler_csv();
 
     Restaurante* array_pesquisa[1000];
     int n_pesquisa = 0;
 
-    char linha[20];
+    char linha[200];
     bool ler_entrada = true;
 
     while (ler_entrada && scanf(" %s", linha) == 1) {
@@ -328,24 +351,59 @@ int main() {
         }
     }
 
+    int lixo_comp = 0, lixo_mov = 0;
+    ordenar_por_selecao(array_pesquisa, n_pesquisa, &lixo_comp, &lixo_mov);
+
+char c_lixo = ' ';
+    bool limpando = true;
+    while (limpando){
+        c_lixo = getchar();
+        if (c_lixo == '\n' || c_lixo == EOF){
+            limpando = false;
+        }
+    }
+
     int comparacoes = 0;
-    int movimentacoes = 0;
     clock_t inicio = clock();
 
-    ordenar_por_selecao(array_pesquisa, n_pesquisa, &comparacoes, &movimentacoes);
+    bool lendo_nomes = true;
+    
+    while (lendo_nomes && fgets(linha, 200, stdin) != NULL){
+        
+        bool achou_fim_linha = false;
+        int tamanho_real = 0;
+
+        for (int i = 0; linha[i] != '\0'; i++) {
+            if (!achou_fim_linha && (linha[i] == '\n' || linha[i] == '\r')){
+                linha[i] = '\0';
+                achou_fim_linha = true;
+            }
+            if (!achou_fim_linha) {
+                tamanho_real++;
+            }
+        }
+
+        if (tamanho_real > 0){
+            if (strcmp(linha, "FIM") == 0){
+                lendo_nomes = false;
+            } else {
+                bool resultado = pesquisa_binaria(array_pesquisa, n_pesquisa, linha, &comparacoes);
+                
+                if (resultado){
+                    printf("SIM\n");
+                } else {
+                    printf("NAO\n");
+                }
+            }
+        }
+    }
 
     clock_t fim = clock();
     double tempo_execucao = ((double)(fim - inicio)) / (CLOCKS_PER_SEC / 1000.0);
 
-    for(int i = 0; i < n_pesquisa; i++){
-        char buffer_saida[2000];
-        formatar_restaurante(array_pesquisa[i], buffer_saida);
-        printf("%s\n", buffer_saida);
-    }
-
-    FILE* log = fopen("896238_selecao.txt", "w");
+    FILE* log = fopen("896238_binaria.txt", "w");
     if (log != NULL) {
-        fprintf(log, "896238\t%d\t%d\t%f\n", comparacoes, movimentacoes, tempo_execucao);
+        fprintf(log, "896238\t%d\t%f\n", comparacoes, tempo_execucao);
         fclose(log);
     }
 
