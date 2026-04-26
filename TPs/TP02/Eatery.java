@@ -515,6 +515,65 @@ public class Eatery{
         }
     }
 
+    public static int comparar(Restaurante r1, Restaurante r2, int[] log) {
+        
+        Data d1 = r1.getDataAbertura();
+        Data d2 = r2.getDataAbertura();
+
+        if (d1.getAno() != d2.getAno()){
+            return d1.getAno() - d2.getAno();
+        } 
+        else if (d1.getMes() != d2.getMes()){
+            return d1.getMes() - d2.getMes();
+        } 
+        else if (d1.getDia() != d2.getDia()){
+            return d1.getDia() - d2.getDia();
+        } 
+        else {
+            log[0]++;
+            return r1.getNome().compareTo(r2.getNome());
+        }
+    }
+
+    public static void reconstruir(Restaurante[] array, int tam, int i, int[] log){
+        boolean maxHeap = false;
+        
+        while (i < tam / 2 && !maxHeap) {
+            int filho = 2 * i + 1;
+            
+            if (filho + 1 < tam) {
+                if (comparar(array[filho + 1], array[filho], log) > 0){
+                    filho = filho + 1;
+                }
+            }
+            
+            if (comparar(array[filho], array[i], log) > 0){
+                Restaurante tmp = array[i];
+                array[i] = array[filho];
+                array[filho] = tmp;
+                
+                log[1] += 3;
+                i = filho;
+            } else {
+                maxHeap = true; 
+            }
+        }
+    }
+
+    public static void heapsort(Restaurante[] array, int n, int[] log){
+        for (int i = (n / 2) - 1; i >= 0; i--) {
+            reconstruir(array, n, i, log);
+        }
+
+        for (int i = n - 1; i > 0; i--){
+            Restaurante tmp = array[0];
+            array[0] = array[i];
+            array[i] = tmp;
+            log[1] += 3;
+
+            reconstruir(array, i, 0, log);
+        }
+    }
     public static void main(String[] args) {
         ColecaoRestaurantes colecao = ColecaoRestaurantes.lerCsv();
         Restaurante[] base = colecao.getRestaurantes();
@@ -557,7 +616,7 @@ public class Eatery{
         int[] contadoresLog = new int[2];
         long inicioTempo = System.currentTimeMillis();
 
-        mergesort(arrayPesquisa, 0, nPesquisa - 1, contadoresLog);
+        heapsort(arrayPesquisa, nPesquisa, contadoresLog);
 
         long fim = System.currentTimeMillis();
         long tempoExecucao = fim - inicioTempo;
@@ -567,7 +626,7 @@ public class Eatery{
         }
 
         try {
-            FileWriter arquivoLog = new FileWriter("896238_mergesort.txt");
+            FileWriter arquivoLog = new FileWriter("896238_heapsort.txt");
             PrintWriter gravador = new PrintWriter(arquivoLog);
             
             gravador.printf("896238\t%d\t%d\t%d\n", contadoresLog[0], contadoresLog[1], tempoExecucao);
